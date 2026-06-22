@@ -1,54 +1,129 @@
-# Storefront Backend Project
+# Storefront Backend API
 
-## Getting Started
+A RESTful API for an online storefront built with Node.js, Express, TypeScript, and PostgreSQL.
 
-This repo contains a basic Node and Express app to get you started in constructing an API. To get started, clone this repo and run `yarn` in your terminal at the project root.
+## Prerequisites
 
-## Required Technologies
-Your application must make use of the following libraries:
-- Postgres for the database
-- Node/Express for the application logic
-- dotenv from npm for managing environment variables
-- db-migrate from npm for migrations
-- jsonwebtoken from npm for working with JWTs
-- jasmine from npm for testing
+- [Node.js](https://nodejs.org/) v16+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
-## Steps to Completion
+## Ports
 
-### 1. Plan to Meet Requirements
+| Service    | Port |
+|------------|------|
+| API Server | 3000 |
+| PostgreSQL | 5432 |
 
-In this repo there is a `REQUIREMENTS.md` document which outlines what this API needs to supply for the frontend, as well as the agreed upon data shapes to be passed between front and backend. This is much like a document you might come across in real life when building or extending an API. 
+## Environment Setup
 
-Your first task is to read the requirements and update the document with the following:
-- Determine the RESTful route for each endpoint listed. Add the RESTful route and HTTP verb to the document so that the frontend developer can begin to build their fetch requests.    
-**Example**: A SHOW route: 'blogs/:id' [GET] 
+Create a `.env` file in the project root with the following variables:
 
-- Design the Postgres database tables based off the data shape requirements. Add to the requirements document the database tables and columns being sure to mark foreign keys.   
-**Example**: You can format this however you like but these types of information should be provided
-Table: Books (id:varchar, title:varchar, author:varchar, published_year:varchar, publisher_id:string[foreign key to publishers table], pages:number)
+```
+POSTGRES_DB=full_stack_dev
+POSTGRES_USER=full_stack_user
+POSTGRES_PASSWORD=password123
+POSTGRES_HOST=127.0.0.1
+POSTGRES_PORT=5432
+BCRYPT_PASSWORD=your-bcrypt-secret
+SALT_ROUNDS=10
+TOKEN_SECRET=your-jwt-secret
+```
 
-**NOTE** It is important to remember that there might not be a one to one ratio between data shapes and database tables. Data shapes only outline the structure of objects being passed between frontend and API, the database may need multiple tables to store a single shape. 
+## Package Installation
 
-### 2.  DB Creation and Migrations
+```bash
+npm install
+```
 
-Now that you have the structure of the databse outlined, it is time to create the database and migrations. Add the npm packages dotenv and db-migrate that we used in the course and setup your Postgres database. If you get stuck, you can always revisit the database lesson for a reminder. 
+## Database Setup
 
-You must also ensure that any sensitive information is hashed with bcrypt. If any passwords are found in plain text in your application it will not pass.
+### 1. Start the PostgreSQL container
 
-### 3. Models
+Ensure Docker Desktop is running, then:
 
-Create the models for each database table. The methods in each model should map to the endpoints in `REQUIREMENTS.md`. Remember that these models should all have test suites and mocks.
+```bash
+docker compose up -d
+```
 
-### 4. Express Handlers
+This starts a PostgreSQL 16 container on port `5432` using the credentials from your `.env` file.
 
-Set up the Express handlers to route incoming requests to the correct model method. Make sure that the endpoints you create match up with the enpoints listed in `REQUIREMENTS.md`. Endpoints must have tests and be CORS enabled. 
+### 2. Verify the database connection
 
-### 5. JWTs
+```bash
+docker compose exec postgres psql -U full_stack_user -d full_stack_dev
+```
 
-Add JWT functionality as shown in the course. Make sure that JWTs are required for the routes listed in `REQUIUREMENTS.md`.
+Once inside psql, run `\dt` to list tables. Type `\q` to exit.
 
-### 6. QA and `README.md`
+### 3. Run database migrations
 
-Before submitting, make sure that your project is complete with a `README.md`. Your `README.md` must include instructions for setting up and running your project including how you setup, run, and connect to your database. 
+```bash
+npx db-migrate up
+```
 
-Before submitting your project, spin it up and test each endpoint. If each one responds with data that matches the data shapes from the `REQUIREMENTS.md`, it is ready for submission!
+This creates all required tables: `users`, `products`, `orders`, `order_products`.
+
+### 4. Seed an admin user
+
+Generate a bcrypt hash for your chosen password (replace values to match your `.env`):
+
+```bash
+node -e "const b=require('bcrypt'); console.log(b.hashSync('your-password' + 'your-bcrypt-secret', 10))"
+```
+
+Then insert the admin user via psql:
+
+```bash
+docker compose exec postgres psql -U full_stack_user -d full_stack_dev
+```
+
+```sql
+INSERT INTO users (first_name, last_name, password) VALUES ('Admin', 'User', '<paste_hash_here>');
+```
+
+## Running the Server
+
+```bash
+npm start
+```
+
+The API will be available at `http://localhost:3000`.
+
+## Available Scripts
+
+| Script             | Description                       |
+|--------------------|-----------------------------------|
+| `npm start`        | Start the server with ts-node     |
+| `npm run watch`    | Start with auto-reload on changes |
+| `npm run lint`     | Run ESLint on TypeScript files    |
+| `npm run prettier` | Format TypeScript files           |
+| `npm test`         | Run Jasmine tests                 |
+
+## Authentication
+
+All protected routes require a JWT token in the `Authorization` header:
+
+```
+Authorization: Bearer <token>
+```
+
+### Getting a token
+
+Send a POST request to `/api/login`:
+
+```
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{
+  "first_name": "Admin",
+  "last_name": "User",
+  "password": "your-password"
+}
+```
+
+Use the returned `token` value in the `Authorization` header for all protected requests.
+
+## API Routes
+
+See [REQUIREMENTS.md](./REQUIREMENTS.md) for full API documentation including request/response shapes.
