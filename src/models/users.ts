@@ -45,7 +45,7 @@ export class UsersStore {
   async update(u: User): Promise<User> {
     const conn = await Client.connect();
     const sql =
-      'UPDATE users SET first_name=($1), last_name=($2), username=($3), password=($4) WHERE id=($5) RETURNING *';
+      'UPDATE users SET first_name=($1), last_name=($2), password=($3) WHERE id=($4) RETURNING *';
     const hash = bcrypt.hashSync(u.password + pepper, parseInt(saltrounds));
     const result = await conn.query(sql, [
       u.first_name,
