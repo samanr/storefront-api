@@ -1,7 +1,7 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import request from 'supertest';
-import { addToOrder, getOrder } from '../orders';
-import { OrderStore, OrderWithProducts } from '../../models/orders';
+import { addToOrder, getOrder } from '../handlers/orders';
+import { OrderStore, OrderWithProducts } from '../models/orders';
 
 describe('Orders Handlers', () => {
   let app: Express;

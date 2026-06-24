@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { User, UsersStore } from '../models/users';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -80,7 +81,10 @@ export const create = async (req: Request, res: Response) => {
   try {
     const newUser = await store.create(user);
     console.info(`[Users] Created user id=${newUser.id}`);
-    res.status(201).json({ message: 'User created' });
+    const secret = process.env.TOKEN_SECRET;
+    if (!secret) throw new Error('TOKEN_SECRET not configured');
+    const token = jwt.sign({ user: newUser }, secret);
+    res.status(201).json({ token });
   } catch (err) {
     console.error('[Users] Failed to create user', err);
     res.status(400).json({ error: 'Failed to create user' });
