@@ -81,6 +81,46 @@ docker compose exec postgres psql -U full_stack_user -d full_stack_dev
 INSERT INTO users (first_name, last_name, password) VALUES ('Admin', 'User', '<paste_hash_here>');
 ```
 
+## Running Tests
+
+### 1. Create the test database (one-time setup)
+
+The PostgreSQL container must be running (`docker compose up -d`). Then run:
+
+```bash
+docker exec $(docker ps -qf "ancestor=postgres:16") psql -U full_stack_user -d full_stack_dev -c "
+  CREATE USER test_user WITH PASSWORD 'password123';
+  CREATE DATABASE \"full_stack_dev-test\";
+  GRANT ALL PRIVILEGES ON DATABASE \"full_stack_dev-test\" TO test_user;
+"
+```
+
+Then grant schema permissions:
+
+```bash
+docker exec $(docker ps -qf "ancestor=postgres:16") psql -U full_stack_user -d "full_stack_dev-test" -c "GRANT ALL ON SCHEMA public TO test_user;"
+```
+
+> This only needs to be done once. The test database persists across runs.
+
+### 2. Run the test suite
+
+```bash
+npm test
+```
+
+This will:
+- Run all pending migrations on the test database
+- Execute all 45 Jasmine specs (handler tests + model tests)
+- Each spec runs inside a database transaction that is rolled back automatically — no manual cleanup needed and no leftover data between runs
+
+### Test structure
+
+| Directory | What it tests |
+|-----------|--------------|
+| `src/tests/` | HTTP handler tests (mocked DB, uses supertest) |
+| `src/models/tests/` | Model/store tests (hits the real test DB) |
+
 ## Running the Server
 
 ```bash
