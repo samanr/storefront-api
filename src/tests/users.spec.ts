@@ -52,14 +52,15 @@ describe('Users Handlers', () => {
   });
 
   describe('POST /users — create [token required]', () => {
-    it('returns 201 with user created message', async () => {
+    it('returns 201 with a JWT token', async () => {
       app.post('/users', create);
       spyOn(UsersStore.prototype, 'create').and.returnValue(Promise.resolve(mockUser));
       const response = await request(app)
         .post('/users')
         .send({ first_name: 'John', last_name: 'Doe', password: 'password' });
       expect(response.status).toBe(201);
-      expect(response.body.message).toBe('User created');
+      expect(response.body.token).toBeDefined();
+      expect(typeof response.body.token).toBe('string');
     });
   });
 

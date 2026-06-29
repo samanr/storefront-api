@@ -3,6 +3,7 @@ import { UsersStore } from '../users';
 describe('UsersStore — database actions', () => {
   const store = new UsersStore();
   let testUserId: number;
+  let showUserId: number;
 
   beforeAll(async () => {
     const user = await store.create({
@@ -11,10 +12,19 @@ describe('UsersStore — database actions', () => {
       password: 'testpassword123',
     });
     testUserId = user.id;
+
+    // Separate user owned by the show test — unaffected by update
+    const showUser = await store.create({
+      first_name: 'Spec',
+      last_name: 'ShowOnly',
+      password: 'testpassword123',
+    });
+    showUserId = showUser.id;
   });
 
   afterAll(async () => {
     await store.delete(String(testUserId));
+    await store.delete(String(showUserId));
   });
 
   it('index returns an array of users', async () => {
@@ -23,9 +33,9 @@ describe('UsersStore — database actions', () => {
   });
 
   it('show returns the correct user by id', async () => {
-    const result = await store.show(testUserId);
+    const result = await store.show(showUserId);
     expect(result).not.toBeNull();
-    expect(result!.id).toBe(testUserId);
+    expect(result!.id).toBe(showUserId);
     expect(result!.first_name).toBe('Spec');
   });
 
